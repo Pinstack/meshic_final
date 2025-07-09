@@ -1,6 +1,9 @@
 import os
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from psycopg2.extras import register_adapter, Json
+
+register_adapter(dict, Json)
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",

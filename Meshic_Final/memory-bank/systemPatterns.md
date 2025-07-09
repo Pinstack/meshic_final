@@ -66,3 +66,18 @@ These relationships are enforced in the schema (see models.py) and are critical 
 - Stage 1: Download and decode tiles in Python, insert raw geometries (native CRS, e.g., EPSG:3857) into a staging table (e.g., parcels_raw).
 - Stage 2: Reproject all geometries in the staging table to EPSG:4326 using PostGIS (SQL), as a separate step/module.
 - This separation improves auditability, performance, and robustness, and leverages PostGIS for spatial operations. 
+
+## Ingestion Staging Table Pattern (2024-06)
+- Geometry is stored as WKB in a PostGIS `geometry` column (native CRS, e.g., EPSG:3857).
+- All other feature properties are stored as JSONB in a `properties` column.
+- This enables efficient spatial queries and indexing, while preserving all raw attributes for audit and reprocessing.
+- Downstream transformation to normalized/strict schema occurs in later pipeline stages. 
+
+### Ingestion Pipeline Optimizations (2024-06)
+- Batch inserts (500–1000 features per transaction) for DB efficiency.
+- Explicit SRID handling on geometry column (e.g., 3857 native CRS).
+- Geometry validation with `shapely.is_valid` before DB insert.
+- Error logging at both tile and feature level for auditability.
+- GIST index on geometry, index on tile_id for query performance.
+- Stream/process features to minimize memory usage for large tiles.
+- Use Postgres COPY for very large bulk loads (optional/advanced). 

@@ -5,6 +5,11 @@
 - Schema and migrations are robust and in sync
 - Ready to implement pipeline stages and CLI
 - Config loader is now robust, type-safe, and fully tested using Pydantic. All pipeline code now uses attribute access for config values.
+- **Downloader and orchestrator are modular, robust, and fully tested.**
+- **Next immediate focus: Implement decode and DB insert steps for ingestion pipeline.**
+- **Decode .pbf tiles, extract features, and insert into staging table using SQLAlchemy Core.**
+- **Add robust error handling and status updates for each tile.**
+- **Write/expand tests and documentation for these steps.**
 
 ## Recent Changes
 - Database and PostGIS upgraded and configured
@@ -58,3 +63,27 @@
   1. Download and decode tiles, insert raw geometries (native CRS) into staging table.
   2. Reproject all geometries in PostGIS as a separate step/module.
 - This approach improves auditability, performance, and separation of concerns. 
+
+- **Ingestion pipeline decision (2024-06):**
+    - Geometry will be stored as WKB in a PostGIS `geometry` column (native CRS, e.g., EPSG:3857) in the staging table (`parcels_raw`).
+    - All other feature properties will be stored as JSONB in a `properties` column.
+    - Rationale: This approach maximizes spatial query performance, leverages PostGIS indexing, and maintains flexibility/auditability for raw data. It aligns with the modular, audit-first pipeline pattern and systemPatterns.md. 
+
+---
+
+**Ingestion Pipeline Optimizations (2024-06):**
+- Use batch/transactional inserts (e.g., 500–1000 features per batch) for DB efficiency.
+- Explicitly set SRID (e.g., 3857) on geometry column to ensure correct spatial reference in PostGIS.
+- Validate geometries with `shapely.is_valid` before insert; log or skip invalid features.
+- Log errors at both tile and feature level for traceability of partial failures.
+- Ensure GIST index on geometry column and index on tile_id for fast queries.
+- For very large tiles, process features in a streaming fashion to minimize memory usage.
+- For extremely large ingests, consider Postgres COPY for bulk loading (advanced). 
+
+## 2024-07-09: Ingestion Pipeline Update
+- Ingestion pipeline now robustly ingests .pbf tiles in native EPSG:3857 using GeoPandas (GDAL/Fiona backend).
+- All geometry validation, JSONB serialization, and DB schema (SRID 3857) issues resolved.
+- Batch ingestion tested: all test tiles ingested with 0 errors/skips.
+- Alembic migrations merged and version table supports long revision IDs.
+- Ready for large-scale or automated batch ingestion.
+- **Next step:** PostGIS-based stitching, deduplication, and reprojection pipeline. 

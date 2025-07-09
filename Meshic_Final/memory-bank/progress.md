@@ -3,14 +3,19 @@
 ## What Works
 - Database, PostGIS, and Alembic setup complete
 - Initial schema migration applied successfully
+- **Downloader and orchestrator pipeline are modular, robust, and fully tested.**
 
 ## What's Left to Build
+- **Implement decode and DB insert steps for ingestion pipeline (decode .pbf, extract features, insert to staging table using SQLAlchemy Core).**
+- **Add robust error handling and status updates for each tile.**
+- **Write/expand tests and documentation for these steps.**
 - Implement all pipeline stages (discovery, ingestion, stitching, H3 indexing, enrichment)
 - Scaffold and implement Typer CLI
 - Write tests and documentation
 
 ## Current Status
 - Database and migrations are robust and ready for development
+- **Downloader and orchestrator complete; next focus is decode/insert for ingestion.**
 
 ## Known Issues
 - None 
@@ -40,3 +45,9 @@
 - New: After DB processing, export to GeoJSON for visualization (e.g., Kepler.gl). Coordinate transformation for visualization is handled at export time. 
 - Ingestion and reprojection are now modular: download/decode to staging, then reproject in PostGIS.
 - This improves auditability and performance. 
+
+### 2024-07-09: Ingestion Complete
+- Ingestion pipeline robust for batch .pbf ingestion (EPSG:3857).
+- All test tiles ingested with 0 errors.
+- DB schema (SRID 3857) and Alembic migration issues resolved.
+- Next: PostGIS stitching, deduplication, reprojection. 

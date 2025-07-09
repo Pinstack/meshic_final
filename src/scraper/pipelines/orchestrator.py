@@ -9,13 +9,15 @@ from typing import List, Optional
 
 import structlog
 from mapbox_vector_tile import decode
-from sqlalchemy import insert, select, update
+from sqlalchemy import select, update, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scraper.db.engine import get_async_db_engine, get_async_session
-from scraper.db.models import parcels_raw, tile_state
+from scraper.db.models import tile_state
 from scraper.utils.config import get_discovery_config
 from scraper.utils.downloader import Downloader
+import shapely.geometry
+from shapely.errors import ShapelyError
 
 
 logger = structlog.get_logger()
@@ -54,6 +56,25 @@ def _decode_parcels(tile_bytes: bytes) -> List[dict]:
     return parcels.get("features", []) if isinstance(parcels, dict) else []
 
 
+def _feature_to_row(tile_id, feature):
+    try:
+        geom = shapely.geometry.shape(feature["geometry"])
+        if not geom.is_valid:
+            logger.warning("Invalid geometry skipped", tile_id=tile_id)
+            return None
+        # Convert to WKB for PostGIS, set SRID 3857
+        wkb = geom.wkb
+        return {
+            "tile_id": tile_id,
+            "geometry": wkb,  # SQLAlchemy should handle SRID if column is set up
+            "properties": feature.get("properties", {}),
+            "ingested_at": datetime.utcnow(),
+        }
+    except (KeyError, ShapelyError, TypeError, ValueError) as exc:
+        logger.error("Feature decode error", tile_id=tile_id, error=str(exc))
+        return None
+
+
 async def _mark_tile(
     session: AsyncSession, tile_id: str, status: str, error: Optional[str] = None
 ) -> None:
@@ -72,17 +93,36 @@ async def ingest_one(engine, downloader: Downloader, row: dict) -> None:
             if not tile_bytes:
                 raise ValueError(f"Failed to download tile for {row}")
             features = _decode_parcels(tile_bytes)
-            if features:
-                rows = [
-                    {
-                        "tile_id": row["tile_id"],
-                        "geometry": f["geometry"],
-                        "properties": f.get("properties", {}),
-                        "ingested_at": datetime.utcnow(),
-                    }
-                    for f in features
-                ]
-                await session.execute(insert(parcels_raw), rows)
+            rows = []
+            for f in features:
+                r = _feature_to_row(row["tile_id"], f)
+                if r:
+                    rows.append(r)
+            if rows:
+                BATCH_SIZE = 1000
+                for i in range(0, len(rows), BATCH_SIZE):
+                    # context7/PostGIS best practice: use ST_GeomFromWKB for geometry
+                    insert_stmt = text(
+                        """
+                        INSERT INTO parcels_raw (tile_id, geometry, properties, ingested_at)
+                        VALUES (:tile_id, ST_GeomFromWKB(:wkb, 3857), :properties, :ingested_at)
+                        """
+                    )
+                    # Prepare rows for insert (skip None)
+                    rows_to_insert = [
+                        {
+                            "tile_id": row["tile_id"],
+                            "wkb": row["geometry"],
+                            "properties": row["properties"],
+                            "ingested_at": row["ingested_at"],
+                        }
+                        for row in rows[i : i + BATCH_SIZE]
+                        if row is not None
+                    ]
+                    if rows_to_insert:
+                        async with get_async_session(engine) as session:
+                            await session.execute(insert_stmt, rows_to_insert)
+                            await session.commit()
             await _mark_tile(session, row["tile_id"], "ingested")
             await session.commit()
         except Exception as exc:  # pragma: no cover - network/DB errors
@@ -93,7 +133,7 @@ async def ingest_one(engine, downloader: Downloader, row: dict) -> None:
             await session.commit()
 
 
-async def run_orchestration(concurrency: int = 5) -> None:
+async def run_orchestration(concurrency: int = 5, batch_size: int = None) -> None:
     engine = get_async_db_engine()
     async with get_async_session(engine) as session:
         pending = await get_pending_tiles(session)
@@ -113,6 +153,10 @@ async def run_orchestration(concurrency: int = 5) -> None:
         logger.info("No valid pending tiles found")
         return
 
+    # Limit batch size if specified
+    if batch_size is not None:
+        valid_pending = valid_pending[:batch_size]
+
     sem = asyncio.Semaphore(concurrency)
     config = get_discovery_config()
     base_url = config.tile_server.split("/{z}")[0]
@@ -128,3 +172,15 @@ async def run_orchestration(concurrency: int = 5) -> None:
             tasks.append(asyncio.create_task(_worker()))
         for t in asyncio.as_completed(tasks):
             await t
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--concurrency", type=int, default=5)
+    parser.add_argument("--batch-size", type=int, default=None)
+    args = parser.parse_args()
+    asyncio.run(
+        run_orchestration(concurrency=args.concurrency, batch_size=args.batch_size)
+    )

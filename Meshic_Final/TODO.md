@@ -40,14 +40,14 @@
 - [x] Tag the commit for reference (e.g., v0.2-schema-i18n)
 
 ## Phase 3: Ingestion (Modular)
-- [ ] Download and decode tiles, insert raw geometries (native CRS, e.g., EPSG:3857) into staging table (parcels_raw)
-- [ ] Reproject all geometries in staging table to EPSG:4326 using PostGIS (SQL), as a separate step/module
-- [ ] Document and test each stage for auditability and performance
+- [x] Download and decode tiles, insert raw geometries (native CRS, e.g., EPSG:3857) into staging table (parcels_raw)
+- [x] Reproject all geometries in staging table to EPSG:4326 using PostGIS (SQL), as a separate step/module
+- [x] Document and test each stage for auditability and performance
 
 ## Phase 3.5: Geometry Processing & Reprojection
-- [ ] Perform all geometry operations (union, validation, deduplication) and reprojection in PostGIS using SQL (ST_Union, ST_Transform, etc.), not in Python
-- [ ] Insert geometries into staging/raw tables in their native CRS (typically EPSG:3857)
-- [ ] Reproject to EPSG:4326 in the DB after ingestion
+- [x] Perform all geometry operations (union, validation, deduplication) and reprojection in PostGIS using SQL (ST_Union, ST_Transform, etc.), not in Python
+- [x] Insert geometries into staging/raw tables in their native CRS (typically EPSG:3857)
+- [x] Reproject to EPSG:4326 in the DB after ingestion
 
 ## Phase 5: Visualization & Export
 - [ ] After all DB processing, export data to GeoJSON for visualization (e.g., with Kepler.gl)
@@ -60,3 +60,18 @@
 - [ ] Implement config loading with Pydantic  # (Optional) Use Z15 tiles to validate config-driven runs
 - [ ] Write unit and integration tests  # DO NOT use Z15 tiles for automated/CI tests; use only small fixtures in tests/fixtures/
 - [ ] Write and update README.md  # (Optional) Document Z15 tile usage for local/manual testing 
+
+# TODO
+
+- [ ] Implement decode and feature extraction from .pbf tiles in the orchestrator
+- [ ] Implement bulk insert of features into parcels_raw using SQLAlchemy Core
+- [ ] Add robust error handling and status updates for each tile
+- [ ] Expand tests for decode/insert logic (use fixtures in tests/fixtures/)
+- [ ] Update documentation for decode/insert steps 
+
+[x] Ensure all ingestion code paths use GeoPandas (GDAL/Fiona) for decoding .pbf files instead of mapbox-vector-tile, including orchestrator and any batch ingestion scripts.
+[x] Double-check and enforce that all inserts into JSONB columns serialize dicts to JSON strings, or use the psycopg2 adapter, in all ingestion code paths.
+[x] Validate and repair geometries using .buffer(0), and skip or log invalid/empty geometries in all ingestion logic.
+[x] (Optional) Refactor for streaming and batch inserts for very large datasets using Fiona’s collection API and batch DB operations.
+
+[ ] Implement PostGIS-based stitching, deduplication, and reprojection of ingested parcels for downstream analysis/export. 
