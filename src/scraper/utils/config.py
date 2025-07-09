@@ -15,7 +15,7 @@ CONFIG_PATH = os.path.abspath(CONFIG_PATH)
 
 
 class DiscoveryConfig(BaseSettings):
-    database_url: Optional[str] = Field(default=None, validation_alias="DATABASE_URL")
+    database_url: Optional[str] = Field(default=None, validation_alias="database_url")
     tile_server: str = Field(
         "https://tiles.suhail.ai/maps/{region}/{z}/{x}/{y}.vector.pbf"
     )

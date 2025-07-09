@@ -23,8 +23,8 @@ def summarize_tile_state():
             text("SELECT status, COUNT(*) FROM tile_state GROUP BY status")
         )
         typer.echo("--- tile_state counts by status ---")
-        for row in result:
-            typer.echo(f"  - {row.status}: {row.count_}")
+        for status, count in result:
+            typer.echo(f"  - {status}: {count}")
 
         # Show a sample of tile IDs
         sample = connection.execute(
