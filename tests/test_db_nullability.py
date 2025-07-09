@@ -1,7 +1,9 @@
 import pytest
-from sqlalchemy import insert, select
-from scraper.db.engine import get_async_db_engine
+from sqlalchemy import insert, select, text
 from scraper.db import models
+from sqlalchemy.ext.asyncio import create_async_engine
+import os
+import pytest_asyncio
 
 # List of tables and their PKs for nullability tests
 TABLES = [
@@ -26,7 +28,11 @@ TABLES = [
 @pytest.mark.asyncio
 @pytest.mark.parametrize("table, pk_dict", TABLES)
 async def test_insert_with_only_pk(table, pk_dict):
-    engine = get_async_db_engine()
+    db_url = os.getenv(
+        "DATABASE_URL",
+        "postgresql+asyncpg://raedmundjennings@localhost:5432/meshic_final",
+    )
+    engine = create_async_engine(db_url, echo=False, future=True)
     async with engine.begin() as conn:
         await conn.execute(insert(table).values(**pk_dict))
         result = await conn.execute(
@@ -39,7 +45,11 @@ async def test_insert_with_only_pk(table, pk_dict):
 
 @pytest.mark.asyncio
 async def test_ar_en_columns_independent_nullability():
-    engine = get_async_db_engine()
+    db_url = os.getenv(
+        "DATABASE_URL",
+        "postgresql+asyncpg://raedmundjennings@localhost:5432/meshic_final",
+    )
+    engine = create_async_engine(db_url, echo=False, future=True)
     async with engine.begin() as conn:
         # Test parcels _ar/_en
         await conn.execute(
@@ -67,4 +77,35 @@ async def test_ar_en_columns_independent_nullability():
                 id=888889, originar_ar=None, originar_en="Test Station"
             )
         )
+    await engine.dispose()
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def truncate_tables():
+    db_url = os.getenv(
+        "DATABASE_URL",
+        "postgresql+asyncpg://raedmundjennings@localhost:5432/meshic_final",
+    )
+    engine = create_async_engine(db_url, echo=False, future=True)
+    # List tables in reverse dependency order (child to parent)
+    tables = [
+        "parcel_buildingrules",
+        "parcel_metrics_priceofmeter",
+        "qi_population_metrics",
+        "qi_stripes",
+        "transactions",
+        "parcels_centroids",
+        "parcels_base",
+        "parcels",
+        "neighborhoods_centroids",
+        "neighborhoods",
+        "subdivisions",
+        "regions",
+        "provinces",
+        "riyadh_bus_stations",
+        "bus_lines",
+    ]
+    async with engine.begin() as conn:
+        for table in tables:
+            await conn.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"))
     await engine.dispose()
