@@ -1,19 +1,21 @@
 # Active Context
 
 ## Current Focus
-- Initial project scaffolding and memory bank creation
-- Preparing for database schema and Alembic setup
+- Database, PostGIS, and Alembic setup complete
+- Schema and migrations are robust and in sync
+- Ready to implement pipeline stages and CLI
 
 ## Recent Changes
-- Created projectbrief.md, productContext.md, systemPatterns.md, techContext.md in memory-bank
+- Database and PostGIS upgraded and configured
+- Alembic async/sync config resolved for migrations
+- Initial schema migration applied successfully
 
 ## Next Steps
-- Complete memory bank with progress.md
-- Scaffold project directory and Poetry environment
-- Set up pre-commit and code quality tools
-- Begin database schema/model definition
+- Implement pipeline stages (discovery, ingestion, stitching, H3 indexing, enrichment)
+- Scaffold Typer CLI
+- Begin TDD for each stage
 
 ## Active Decisions
-- Strict modularity and idempotency for all pipeline stages
-- Use SQLAlchemy Core, not ORM, for all DB models
-- All state tracked in DB, not in files 
+- Use sync engine for Alembic, async for app
+- Exclude PostGIS system tables from migrations
+- Use unique spatial index names to avoid conflicts 
