@@ -11,7 +11,7 @@
 - Use asyncpg for fast, async DB access
 - Use httpx + asyncio for concurrent HTTP requests
 - Use Alembic for migrations
-- Use Pydantic for config
+- Use Pydantic (pydantic-settings) for config validation and loading. All pipeline config is defined in configs/config.yaml, loaded and validated via a Pydantic BaseSettings model (see src/scraper/utils/config.py). This ensures type safety, defaulting, and clear error reporting for all config values.
 - Use structlog for logging
 
 ## Design Patterns
@@ -54,3 +54,10 @@ These relationships are enforced in the schema (see models.py) and are critical 
 - Foreign keys are added only to final/analytics tables via Alembic migration after data is robust.
 - All pipeline logic uses SQLAlchemy Core (not ORM) for consistency and performance.
 - Test-driven development: all schema changes are tested with static fixtures. 
+
+## Geometry and Reprojection Pattern (2024-06)
+- All geometry operations (e.g., union, validation, deduplication) are performed in PostGIS using SQL functions such as ST_Union, ST_MakeValid, and ST_Transform.
+- Geometries are inserted into the staging/raw table in their native CRS (usually EPSG:3857 from the tile server).
+- Reprojection to EPSG:4326 (WGS84) is performed in the database using ST_Transform, ensuring accuracy and performance.
+- Python is used only for downloading (httpx + asyncio) and decoding (mapbox_vector_tile) tile data.
+- After DB processing, data can be exported to GeoJSON for visualization (e.g., with Kepler.gl). This export should occur after all geometry operations and reprojection are complete. 

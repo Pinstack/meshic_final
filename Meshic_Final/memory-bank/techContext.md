@@ -42,3 +42,12 @@
 - Poetry manages dependencies and virtual environments.
 - Database URL convention: `postgresql+asyncpg://raedmundjennings@localhost:5432/meshic_final` (set via `DATABASE_URL`).
 - All DB operations use async engines for performance and scalability. 
+
+---
+
+**Local Data Archive:**
+- `Reference_docs/Z15_tiles/` contains all province .pbf tiles for local testing, pipeline development, and DB validation.
+- This directory is gitignored and not required for CI/CD or automated tests.
+- Use only for local, exploratory, or manual validation; use small fixtures in `tests/fixtures/` for versioned/CI tests. 
+- Geometry operations (union, validation, etc.) and reprojection are performed in PostGIS using SQL (ST_Union, ST_Transform, etc.), not in Python.
+- For visualization (e.g., Kepler.gl), export data as GeoJSON from the DB after all processing and reprojection are complete. Coordinate transformation for visualization is handled at export time. 

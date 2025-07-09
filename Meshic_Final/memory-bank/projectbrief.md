@@ -10,6 +10,8 @@ Build a fully automated, resilient Python pipeline that scrapes parcel polygons 
 - Database as a state machine (tile_urls table as source of truth)
 - Performance-oriented: heavy spatial processing in PostGIS, efficient bulk-loading
 - Modular, maintainable codebase with modern tooling
+- All geometry operations (union, validation, deduplication) and reprojection are performed in PostGIS using SQL (ST_Union, ST_Transform, etc.), not in Python.
+- Visualization (e.g., with Kepler.gl) is performed after exporting GeoJSON from the database, with coordinate transformation handled at export time.
 
 ## Out of Scope
 - Manual intervention in pipeline stages

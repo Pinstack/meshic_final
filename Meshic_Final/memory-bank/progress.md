@@ -35,3 +35,6 @@
   - [ ] Implement data validation scripts for referential integrity.
   - [ ] Add foreign keys to final/analytics tables after validation.
   - [ ] Re-run validation and tests post-FK enforcement. 
+
+- Geometry operations (union, validation, etc.) and reprojection are now handled in PostGIS using SQL (ST_Union, ST_Transform, etc.).
+- New: After DB processing, export to GeoJSON for visualization (e.g., Kepler.gl). Coordinate transformation for visualization is handled at export time. 
