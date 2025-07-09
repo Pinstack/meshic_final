@@ -37,3 +37,20 @@
 - Custom tile math, parcel detection, and async HTTP logic are implemented in src/scraper/pipelines/discovery.py.
 - DB connection/session patterns are standardized in src/scraper/db/engine.py (get_async_db_engine, get_async_session).
 - Canonical data mapping and field definitions are in Reference_docs/Schema/schema_report.md; example data in Reference_docs/*.json. 
+
+## Data Relationships: Parcels, Transactions, Neighborhoods, Price Metrics
+
+- **Parcels have Transactions:** Each parcel may have multiple transactions (sales, etc.), linked by `parcel_objectid`/`parcel_id`.
+- **Transactions enable Neighborhoods to derive price metrics:** Neighborhood price metrics (e.g., `price_of_meter`) are computed from the transactions of parcels within that neighborhood.
+- **Parcels fetch those price metrics:** Parcels reference price metrics derived from their neighborhood's transactions, ensuring up-to-date valuation and analytics.
+
+These relationships are enforced in the schema (see models.py) and are critical for all downstream analytics and enrichment. 
+
+---
+
+## Staged Foreign Key Enforcement Pattern
+- No foreign keys in staging/raw tables during initial ingestion and development.
+- Data validation scripts are run to check for orphaned or invalid references before adding foreign keys.
+- Foreign keys are added only to final/analytics tables via Alembic migration after data is robust.
+- All pipeline logic uses SQLAlchemy Core (not ORM) for consistency and performance.
+- Test-driven development: all schema changes are tested with static fixtures. 

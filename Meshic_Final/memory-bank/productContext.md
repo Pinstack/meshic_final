@@ -14,3 +14,9 @@ Parcel data is fragmented across map tiles and lacks enrichment, making spatial 
 - Clear CLI interface for all stages
 - Transparent progress and error reporting
 - Minimal manual intervention required 
+
+---
+
+**Pipeline Flexibility:**
+- The pipeline is designed for maximum flexibility during data ingestion. Integrity checks and constraints (such as foreign keys) are applied only after data validation and cleaning.
+- User experience goal: enable rapid iteration and robust analytics, with no data loss during schema evolution or pipeline changes. 

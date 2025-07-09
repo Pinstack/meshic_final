@@ -15,3 +15,9 @@ Build a fully automated, resilient Python pipeline that scrapes parcel polygons 
 - Manual intervention in pipeline stages
 - Non-PostgreSQL databases
 - Non-automated enrichment processes 
+
+---
+
+**Update (Phase 2.5 Complete):**
+- The staged approach to foreign keys is now the official policy: raw/staging tables remain flexible, and referential integrity is enforced only after validation and data quality checks.
+- The schema and pipeline are robust, with all nullability and _ar/_en conventions enforced and tested. 

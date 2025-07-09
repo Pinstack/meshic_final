@@ -28,3 +28,16 @@
   2. Implement sync logic to upsert region/province/neighborhood data from Suhail API
   3. Refactor discovery pipeline to use DB as source of truth
   4. Document and test all changes 
+
+- The enforced relationships between Parcels, Transactions, Neighborhoods, and Price Metrics are now fully documented in both the schema (models.py) and the memory bank. This is a core data flow for the pipeline and is now explicit for all future development and review. 
+
+---
+
+**Current Focus (Post-Phase 2.5):**
+- Phase 2.5 is complete: schema, nullability, and _ar/_en conventions are robust and tested.
+- Current focus: pipeline development, data ingestion, and staged referential integrity enforcement.
+- Next TODOs:
+  - [ ] Continue pipeline development and data ingestion without foreign keys in staging/raw tables for maximum flexibility.
+  - [ ] Implement data validation scripts to check for orphaned or invalid references before adding foreign keys.
+  - [ ] Once pipeline and data are robust, add foreign keys to final/analytics tables via Alembic migration.
+  - [ ] Re-run validation and tests to ensure referential integrity is enforced and no data is lost. 

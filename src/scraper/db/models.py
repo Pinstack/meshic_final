@@ -18,12 +18,10 @@ tile_state = Table(
     "tile_state",
     metadata,
     Column("id", Integer, primary_key=True),
-    Column("tile_id", String, unique=True, nullable=False),
-    Column(
-        "status", String, nullable=False
-    ),  # e.g., pending, in_progress, done, failed
-    Column("last_updated", DateTime),
-    Column("error", String),
+    Column("tile_id", String, unique=True, nullable=True),
+    Column("status", String, nullable=True),
+    Column("last_updated", DateTime, nullable=True),
+    Column("error", String, nullable=True),
 )
 
 # Raw parcels staging table
@@ -31,10 +29,14 @@ parcels_raw = Table(
     "parcels_raw",
     metadata,
     Column("id", Integer, primary_key=True),
-    Column("tile_id", String, nullable=False),
-    Column("geometry", Geometry("MULTIPOLYGON", srid=4326, spatial_index=False)),
-    Column("properties", JSONB),
-    Column("ingested_at", DateTime),
+    Column("tile_id", String, nullable=True),
+    Column(
+        "geometry",
+        Geometry("MULTIPOLYGON", srid=4326, spatial_index=False),
+        nullable=True,
+    ),
+    Column("properties", JSONB, nullable=True),
+    Column("ingested_at", DateTime, nullable=True),
     Index("app_parcels_raw_geometry_idx", "geometry", postgresql_using="gist"),
 )
 
@@ -43,11 +45,15 @@ parcels_final = Table(
     "parcels_final",
     metadata,
     Column("id", Integer, primary_key=True),
-    Column("geometry", Geometry("MULTIPOLYGON", srid=4326, spatial_index=False)),
-    Column("h3_index", String),
-    Column("attributes", JSONB),
-    Column("enriched", Boolean, default=False),
-    Column("updated_at", DateTime),
+    Column(
+        "geometry",
+        Geometry("MULTIPOLYGON", srid=4326, spatial_index=False),
+        nullable=True,
+    ),
+    Column("h3_index", String, nullable=True),
+    Column("attributes", JSONB, nullable=True),
+    Column("enriched", Boolean, default=False, nullable=True),
+    Column("updated_at", DateTime, nullable=True),
     Index("app_parcels_final_geometry_idx", "geometry", postgresql_using="gist"),
 )
 
@@ -58,7 +64,7 @@ provinces = Table(
     "provinces",
     metadata,
     Column("province_id", Integer, primary_key=True),
-    Column("province_name", String),
+    Column("province_name", String, nullable=True),
 )
 
 # Regions table
@@ -66,24 +72,29 @@ regions = Table(
     "regions",
     metadata,
     Column("region_id", Integer, primary_key=True),
-    Column("region_name", String),
-    Column("province_id", Integer),  # FK to provinces
+    Column("region_name", String, nullable=True),
+    Column("province_id", Integer, nullable=True),  # FK to provinces
 )
 
 # Neighborhoods table
+# Neighborhood price metrics (e.g., price_of_meter)
+# are computed from transactions of parcels in this neighborhood.
 neighborhoods = Table(
     "neighborhoods",
     metadata,
     Column("neighborhood_id", Integer, primary_key=True),
-    Column("neighborh_aname", String),
-    Column("zoning_id", Integer),
-    Column("zoning_color", String),
-    Column("price_of_meter", String),
-    Column("shape_area", String),
-    Column("transaction_price", String),
-    Column("region_id", Integer),  # FK to regions
-    Column("province_id", Integer),  # FK to provinces
-    Column("geometry", Geometry("POLYGON", srid=4326, spatial_index=False)),
+    Column("neighborh_aname_ar", String, nullable=True),
+    Column("neighborh_aname_en", String, nullable=True),
+    Column("zoning_id", Integer, nullable=True),
+    Column("zoning_color", String, nullable=True),
+    Column("price_of_meter", String, nullable=True),
+    Column("shape_area", String, nullable=True),
+    Column("transaction_price", String, nullable=True),
+    Column("region_id", Integer, nullable=True),  # FK to regions
+    Column("province_id", Integer, nullable=True),  # FK to provinces
+    Column(
+        "geometry", Geometry("POLYGON", srid=4326, spatial_index=False), nullable=True
+    ),
 )
 
 # Neighborhoods centroids table
@@ -91,10 +102,13 @@ neighborhoods_centroids = Table(
     "neighborhoods_centroids",
     metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("neighborhood_id", Integer),
-    Column("neighborh_aname", String),
-    Column("province_id", Integer),
-    Column("geometry", Geometry("POINT", srid=4326, spatial_index=False)),
+    Column("neighborhood_id", Integer, nullable=True),
+    Column("neighborh_aname_ar", String, nullable=True),
+    Column("neighborh_aname_en", String, nullable=True),
+    Column("province_id", Integer, nullable=True),
+    Column(
+        "geometry", Geometry("POINT", srid=4326, spatial_index=False), nullable=True
+    ),
 )
 
 # Subdivisions table
@@ -102,39 +116,51 @@ subdivisions = Table(
     "subdivisions",
     metadata,
     Column("subdivision_id", Integer, primary_key=True),
-    Column("subdivision_no", String),
-    Column("zoning_id", Integer),
-    Column("zoning_color", String),
-    Column("transaction_price", String),
-    Column("price_of_meter", String),
-    Column("shape_area", String),
-    Column("province_id", Integer),
-    Column("geometry", Geometry("MULTIPOLYGON", srid=4326, spatial_index=False)),
+    Column("subdivision_no", String, nullable=True),
+    Column("zoning_id", Integer, nullable=True),
+    Column("zoning_color", String, nullable=True),
+    Column("transaction_price", String, nullable=True),
+    Column("price_of_meter", String, nullable=True),
+    Column("shape_area", String, nullable=True),
+    Column("province_id", Integer, nullable=True),
+    Column(
+        "geometry",
+        Geometry("MULTIPOLYGON", srid=4326, spatial_index=False),
+        nullable=True,
+    ),
 )
 
 # Parcels table (main)
+# Each parcel may have multiple transactions
+# (see transactions table, linked by parcel_objectid/parcel_id)
 parcels = Table(
     "parcels",
     metadata,
     Column("parcel_objectid", String, primary_key=True),
-    Column("province_id", Integer),
-    Column("landuseagroup", String),
-    Column("subdivision_no", String),
-    Column("shape_area", String),
-    Column("zoning_id", Integer),
-    Column("neighborhaname", String),
-    Column("neighborhood_id", Integer),
-    Column("municipality_aname", String),
-    Column("parcel_no", String),
-    Column("subdivision_id", String),
-    Column("transaction_price", String),
-    Column("landuseadetailed", String),
-    Column("parcel_id", Integer),
-    Column("price_of_meter", String),
-    Column("zoning_color", String),
-    Column("ruleid", String),
-    Column("block_no", String),
-    Column("geometry", Geometry("MULTIPOLYGON", srid=4326, spatial_index=False)),
+    Column("province_id", Integer, nullable=True),
+    Column("landuseagroup", String, nullable=True),
+    Column("subdivision_no", String, nullable=True),
+    Column("shape_area", String, nullable=True),
+    Column("zoning_id", Integer, nullable=True),
+    Column("neighborhaname_ar", String, nullable=True),
+    Column("neighborhaname_en", String, nullable=True),
+    Column("neighborhood_id", Integer, nullable=True),
+    Column("municipality_aname_ar", String, nullable=True),
+    Column("municipality_aname_en", String, nullable=True),
+    Column("parcel_no", String, nullable=True),
+    Column("subdivision_id", String, nullable=True),
+    Column("transaction_price", String, nullable=True),
+    Column("landuseadetailed", String, nullable=True),
+    Column("parcel_id", Integer, nullable=True),
+    Column("price_of_meter", String, nullable=True),
+    Column("zoning_color", String, nullable=True),
+    Column("ruleid", String, nullable=True),
+    Column("block_no", String, nullable=True),
+    Column(
+        "geometry",
+        Geometry("MULTIPOLYGON", srid=4326, spatial_index=False),
+        nullable=True,
+    ),
 )
 
 # Parcels base table
@@ -142,24 +168,30 @@ parcels_base = Table(
     "parcels_base",
     metadata,
     Column("parcel_objectid", String, primary_key=True),
-    Column("province_id", Integer),
-    Column("landuseagroup", String),
-    Column("subdivision_no", String),
-    Column("shape_area", String),
-    Column("zoning_id", Integer),
-    Column("neighborhaname", String),
-    Column("neighborhood_id", Integer),
-    Column("municipality_aname", String),
-    Column("parcel_no", String),
-    Column("subdivision_id", String),
-    Column("transaction_price", String),
-    Column("landuseadetailed", String),
-    Column("parcel_id", Integer),
-    Column("price_of_meter", String),
-    Column("zoning_color", String),
-    Column("ruleid", String),
-    Column("block_no", String),
-    Column("geometry", Geometry("MULTIPOLYGON", srid=4326, spatial_index=False)),
+    Column("province_id", Integer, nullable=True),
+    Column("landuseagroup", String, nullable=True),
+    Column("subdivision_no", String, nullable=True),
+    Column("shape_area", String, nullable=True),
+    Column("zoning_id", Integer, nullable=True),
+    Column("neighborhaname_ar", String, nullable=True),
+    Column("neighborhaname_en", String, nullable=True),
+    Column("neighborhood_id", Integer, nullable=True),
+    Column("municipality_aname_ar", String, nullable=True),
+    Column("municipality_aname_en", String, nullable=True),
+    Column("parcel_no", String, nullable=True),
+    Column("subdivision_id", String, nullable=True),
+    Column("transaction_price", String, nullable=True),
+    Column("landuseadetailed", String, nullable=True),
+    Column("parcel_id", Integer, nullable=True),
+    Column("price_of_meter", String, nullable=True),
+    Column("zoning_color", String, nullable=True),
+    Column("ruleid", String, nullable=True),
+    Column("block_no", String, nullable=True),
+    Column(
+        "geometry",
+        Geometry("MULTIPOLYGON", srid=4326, spatial_index=False),
+        nullable=True,
+    ),
 )
 
 # Parcels centroids table
@@ -179,6 +211,8 @@ parcels_centroids = Table(
 )
 
 # Transactions table
+# Each transaction is linked to a parcel and a neighborhood.
+# Neighborhood price metrics are derived from these transactions.
 transactions = Table(
     "transactions",
     metadata,
@@ -267,7 +301,8 @@ riyadh_bus_stations = Table(
     "riyadh_bus_stations",
     metadata,
     Column("station_code", String, primary_key=True),
-    Column("station_name", String),
+    Column("station_name_ar", String),
+    Column("station_name_en", String, nullable=True),
     Column("station_long", String),
     Column("station_lat", String),
     Column("geometry", Geometry("POINT", srid=4326, spatial_index=False)),
@@ -278,14 +313,19 @@ bus_lines = Table(
     "bus_lines",
     metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("originar", String),
+    Column("originar_ar", String),
+    Column("originar_en", String, nullable=True),
     Column("color", String),
     Column("type", String),
     Column("busroute", String),
     Column("origin", String),
     Column(
         "geometry",
-        Geometry("MULTILINESTRING", srid=4326, spatial_index=False),
+        Geometry(
+            "MULTILINESTRING",
+            srid=4326,
+            spatial_index=False,
+        ),
     ),
 )
 

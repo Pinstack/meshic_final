@@ -33,3 +33,12 @@
 - src/scraper/db/engine.py: DB engine/session helpers
 - Reference_docs/Schema/schema_report.md: Canonical schema mapping
 - Reference_docs/*.json: Example data for tests and onboarding 
+
+---
+
+**Tech Stack Updates:**
+- Alembic is used for all schema migrations.
+- SQLAlchemy Core is used for all pipeline logic (no ORM in main pipeline/data stages).
+- Poetry manages dependencies and virtual environments.
+- Database URL convention: `postgresql+asyncpg://raedmundjennings@localhost:5432/meshic_final` (set via `DATABASE_URL`).
+- All DB operations use async engines for performance and scalability. 
