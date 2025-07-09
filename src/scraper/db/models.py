@@ -7,6 +7,7 @@ from sqlalchemy import (
     DateTime,
     Boolean,
     Index,
+    Float,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from geoalchemy2 import Geometry
@@ -65,6 +66,8 @@ provinces = Table(
     metadata,
     Column("province_id", Integer, primary_key=True),
     Column("province_name", String, nullable=True),
+    Column("centroid_x", Float, nullable=True),
+    Column("centroid_y", Float, nullable=True),
 )
 
 # Regions table
@@ -74,6 +77,13 @@ regions = Table(
     Column("region_id", Integer, primary_key=True),
     Column("region_name", String, nullable=True),
     Column("province_id", Integer, nullable=True),  # FK to provinces
+    Column("centroid_x", Float, nullable=True),
+    Column("centroid_y", Float, nullable=True),
+    Column("bounding_box_sw_x", Float, nullable=True),
+    Column("bounding_box_sw_y", Float, nullable=True),
+    Column("bounding_box_ne_x", Float, nullable=True),
+    Column("bounding_box_ne_y", Float, nullable=True),
+    Column("slug", String, nullable=True),  # Region slug for tile server URLs
 )
 
 # Neighborhoods table
@@ -332,6 +342,4 @@ bus_lines = Table(
 # --- END: Extended DB Schema from schema_report.md ---
 
 # Data quality caveats:
-# - subdivisions.subdivision_id has 34 values not in parcels.subdivision_id (nullable FK)
 # - All geometry columns use WGS84 (EPSG:4326)
-# - Some fields are string-typed for flexibility; adjust as needed for strict typing

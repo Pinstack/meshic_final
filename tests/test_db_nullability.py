@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy import insert, select
-from src.scraper.db.engine import get_async_db_engine
-from src.scraper.db import models
+from scraper.db.engine import get_async_db_engine
+from scraper.db import models
 
 # List of tables and their PKs for nullability tests
 TABLES = [

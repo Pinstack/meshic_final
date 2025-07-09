@@ -1,4 +1,4 @@
-from src.scraper.db.models import metadata
+from scraper.db.models import metadata
 from logging.config import fileConfig
 from sqlalchemy import pool
 from alembic import context

@@ -1,3 +1,4 @@
+database_url: "postgresql://raedmundjennings@localhost:5432/meshic_final"
 discovery:
   tile_server: "https://tiles.suhail.ai/maps/{region}/{z}/{x}/{y}.vector.pbf"
   zoom10: 10

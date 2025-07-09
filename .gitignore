@@ -115,3 +115,5 @@ poetry.lock
 .venv/
 venv/
 ENV/
+
+Reference_docs/Z15_tiles/
