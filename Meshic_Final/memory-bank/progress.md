@@ -14,3 +14,11 @@
 
 ## Known Issues
 - None 
+
+## 2024-06-xx: Schema Alignment Progress
+- DB schema now fully aligned with Riyadh z15 tile & API schema report (all layers except streets/dimensions)
+- Outstanding:
+  - Schema alignment tests
+  - Region/province/neighborhood sync logic
+  - Refactor discovery to use DB
+  - Documentation and robust testing 

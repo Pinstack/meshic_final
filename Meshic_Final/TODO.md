@@ -25,6 +25,20 @@
 - [x] Generate and review first migration
 - [x] Apply migration to database
 
+## Phase 2.5: Schema Refinement & Internationalization
+- [ ] Refactor all Arabic text columns to use _ar suffix and add corresponding _en columns (nullable)
+- [ ] Ensure all non-PK columns are nullable for flexibility
+- [ ] Document and enforce: Parcels have Transactions, Transactions enable Neighborhoods to derive price metrics, Parcels fetch those price metrics
+
+## Phase 2.6: Git & Migration Workflow
+- [ ] Create feature branch for schema/i18n/nullability changes (e.g., feature/db-i18n-nullable)
+- [ ] Make small, focused commits for each logical change (Arabic/English columns, nullability, relationships, docs)
+- [ ] Generate and review Alembic migration script
+- [ ] Run all tests and validate migration on a test DB
+- [ ] Open a PR with a clear description of changes and next steps
+- [ ] Merge after review; rebase pipeline branch if needed
+- [ ] Tag the commit for reference (e.g., v0.2-schema-i18n)
+
 ## Phase 3: Implement Pipeline Stages
 - [ ] Implement Discovery Stage (src/scraper/pipelines/discovery.py, CLI command)
 - [ ] Implement Ingestion Stage (src/scraper/pipelines/ingestion.py)

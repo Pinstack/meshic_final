@@ -25,3 +25,11 @@
 - All spatial ops in PostGIS, not Python
 - No ORM for bulk data
 - All tests use static, version-controlled data 
+
+## Config, Scripts, and Data Mapping (Onboarding)
+- configs/config.yaml: All pipeline config (tile server, zooms, concurrency, etc.)
+- src/scraper/utils/config.py: Loads config.yaml, provides get_discovery_config()
+- src/scraper/pipelines/discovery.py: Custom tile math, parcel detection, async HTTP
+- src/scraper/db/engine.py: DB engine/session helpers
+- Reference_docs/Schema/schema_report.md: Canonical schema mapping
+- Reference_docs/*.json: Example data for tests and onboarding 

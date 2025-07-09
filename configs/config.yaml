@@ -1,0 +1,7 @@
+discovery:
+  tile_server: "https://tiles.suhail.ai/maps/{region}/{z}/{x}/{y}.vector.pbf"
+  zoom10: 10
+  zoom12: 12
+  zoom15: 15
+  max_radius: 30
+  concurrency: 20
