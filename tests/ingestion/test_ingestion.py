@@ -1,0 +1,88 @@
+import types
+from pathlib import Path
+
+import httpx
+import pytest
+
+from src.scraper.pipelines import ingestion
+
+
+def test_parse_tile_id():
+    assert ingestion._parse_tile_id("riyadh_15_1_2") == ("riyadh", 15, 1, 2)
+    assert ingestion._parse_tile_id("bad") is None
+
+
+def test_decode_parcels():
+    tile_path = Path(__file__).parent.parent / "fixtures" / "valid_tile.pbf"
+    if not tile_path.exists():
+        pytest.skip("valid_tile.pbf missing")
+    with tile_path.open("rb") as fh:
+        data = fh.read()
+    feats = ingestion._decode_parcels(data)
+    assert isinstance(feats, list)
+    assert feats
+
+
+class DummySession:
+    def __init__(self, ids):
+        self.ids = ids
+
+    async def execute(self, stmt, *args, **kwargs):
+        class R:
+            def scalars(self_inner):
+                for tid in self.ids:
+                    yield tid
+
+        return R()
+
+
+@pytest.mark.asyncio
+async def test_get_pending_tiles():
+    session = DummySession(["reg_15_1_2", "bad"])
+    tiles = await ingestion.get_pending_tiles(session)
+    assert len(tiles) == 1
+    assert tiles[0]["x"] == 1
+
+
+class DummyResponse:
+    def __init__(self, content=b"", status_code=200):
+        self.content = content
+        self.status_code = status_code
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise httpx.HTTPStatusError("err", request=None, response=None)
+
+
+class Recorder(DummySession):
+    def __init__(self):
+        super().__init__([])
+        self.calls = []
+
+    async def execute(self, stmt, params=None):
+        self.calls.append((stmt, params))
+
+
+@pytest.mark.asyncio
+async def test_ingest_one(monkeypatch):
+    tile_path = Path(__file__).parent.parent / "fixtures" / "valid_tile.pbf"
+    if not tile_path.exists():
+        pytest.skip("valid_tile.pbf missing")
+    tile_bytes = tile_path.read_bytes()
+
+    async def fake_get(url):
+        return DummyResponse(tile_bytes, 200)
+
+    client = types.SimpleNamespace(get=fake_get)
+    session = Recorder()
+
+    async def fake_mark(session_, tile_id, status, error=None):
+        session.calls.append(("mark", status))
+
+    monkeypatch.setattr(ingestion, "_mark_tile", fake_mark)
+
+    row = {"tile_id": "r_15_1_2", "region": "r", "z": 15, "x": 1, "y": 2}
+    await ingestion.ingest_one(session, client, row)
+
+    assert session.calls  # insert executed
+    assert ("mark", "ingested") in session.calls

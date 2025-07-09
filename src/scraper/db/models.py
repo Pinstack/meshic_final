@@ -12,6 +12,8 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from geoalchemy2 import Geometry
 
+JSONType = JSONB
+
 metadata = MetaData()
 
 # Control table for tile state machine
@@ -36,7 +38,7 @@ parcels_raw = Table(
         Geometry("MULTIPOLYGON", srid=4326, spatial_index=False),
         nullable=True,
     ),
-    Column("properties", JSONB, nullable=True),
+    Column("properties", JSONType, nullable=True),
     Column("ingested_at", DateTime, nullable=True),
     Index("app_parcels_raw_geometry_idx", "geometry", postgresql_using="gist"),
 )
@@ -52,7 +54,7 @@ parcels_final = Table(
         nullable=True,
     ),
     Column("h3_index", String, nullable=True),
-    Column("attributes", JSONB, nullable=True),
+    Column("attributes", JSONType, nullable=True),
     Column("enriched", Boolean, default=False, nullable=True),
     Column("updated_at", DateTime, nullable=True),
     Index("app_parcels_final_geometry_idx", "geometry", postgresql_using="gist"),

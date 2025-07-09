@@ -1,14 +1,17 @@
 import os
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql+asyncpg://raedmundjennings@localhost:5432/meshic_final"
+    "DATABASE_URL",
+    "postgresql+asyncpg://raedmundjennings@localhost:5432/meshic_final",
 )
+
+engine = create_async_engine(DATABASE_URL, echo=False, future=True)
 
 
 def get_async_db_engine():
-    return create_async_engine(DATABASE_URL, echo=False, future=True)
+    return engine
 
 
 def get_async_session(engine):
