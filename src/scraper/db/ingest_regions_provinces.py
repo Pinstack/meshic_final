@@ -4,6 +4,9 @@ import httpx
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.dialects.postgresql import insert
 from scraper.db.models import regions, provinces, metadata
+import structlog
+
+logger = structlog.get_logger()
 
 DB_URL = os.environ.get(
     "DATABASE_URL", "postgresql+asyncpg://raedmundjennings@localhost:5432/meshic_final"
@@ -85,17 +88,17 @@ async def main():
         for region in data:
             await upsert_region_province(session, region)
         await session.commit()
-    print("Regions and provinces ingested successfully from API.")
+    logger.info("Regions and provinces ingested successfully from API.")
 
-    # Verification: Print all regions and provinces
-    print("\nRegions:")
+    # Verification: Log counts at INFO, details at DEBUG
     result = await session.execute(regions.select())
-    for row in result.mappings().all():
-        print(dict(row))
-    print("\nProvinces:")
+    region_rows = result.mappings().all()
+    logger.info("Region count", count=len(region_rows))
+    logger.debug("Region details", regions=[dict(row) for row in region_rows])
     result = await session.execute(provinces.select())
-    for row in result.mappings().all():
-        print(dict(row))
+    province_rows = result.mappings().all()
+    logger.info("Province count", count=len(province_rows))
+    logger.debug("Province details", provinces=[dict(row) for row in province_rows])
 
 
 if __name__ == "__main__":

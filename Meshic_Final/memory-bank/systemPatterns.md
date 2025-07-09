@@ -61,3 +61,8 @@ These relationships are enforced in the schema (see models.py) and are critical 
 - Reprojection to EPSG:4326 (WGS84) is performed in the database using ST_Transform, ensuring accuracy and performance.
 - Python is used only for downloading (httpx + asyncio) and decoding (mapbox_vector_tile) tile data.
 - After DB processing, data can be exported to GeoJSON for visualization (e.g., with Kepler.gl). This export should occur after all geometry operations and reprojection are complete. 
+
+## Modular Pipeline Pattern (2024-07)
+- Stage 1: Download and decode tiles in Python, insert raw geometries (native CRS, e.g., EPSG:3857) into a staging table (e.g., parcels_raw).
+- Stage 2: Reproject all geometries in the staging table to EPSG:4326 using PostGIS (SQL), as a separate step/module.
+- This separation improves auditability, performance, and robustness, and leverages PostGIS for spatial operations. 

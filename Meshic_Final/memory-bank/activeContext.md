@@ -53,3 +53,8 @@
 - Pipeline now inserts geometries into the staging/raw table in their native CRS (typically EPSG:3857 from the tile server).
 - All reprojection to EPSG:4326 and geometry operations (union, validation, etc.) are performed in PostGIS using SQL (ST_Transform, ST_Union, etc.).
 - For visualization (e.g., with Kepler.gl), export data as GeoJSON from the DB after all processing and reprojection are complete. Coordinate transformation for visualization is handled at export time. 
+
+- The ingestion pipeline is now modularized:
+  1. Download and decode tiles, insert raw geometries (native CRS) into staging table.
+  2. Reproject all geometries in PostGIS as a separate step/module.
+- This approach improves auditability, performance, and separation of concerns. 

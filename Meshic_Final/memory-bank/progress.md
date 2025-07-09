@@ -38,3 +38,5 @@
 
 - Geometry operations (union, validation, etc.) and reprojection are now handled in PostGIS using SQL (ST_Union, ST_Transform, etc.).
 - New: After DB processing, export to GeoJSON for visualization (e.g., Kepler.gl). Coordinate transformation for visualization is handled at export time. 
+- Ingestion and reprojection are now modular: download/decode to staging, then reproject in PostGIS.
+- This improves auditability and performance. 

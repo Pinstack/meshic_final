@@ -22,7 +22,7 @@ TILE_SERVER = config.tile_server
 ZOOM10 = config.zoom10
 ZOOM12 = config.zoom12
 ZOOM15 = config.zoom15
-MAX_RADIUS = 30
+MAX_RADIUS = config.max_radius
 CONCURRENCY = config.concurrency
 
 

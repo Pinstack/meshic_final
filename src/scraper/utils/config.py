@@ -3,6 +3,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, ValidationError
 import os
 import yaml
+import structlog
+
+logger = structlog.get_logger()
 
 CONFIG_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -28,12 +31,14 @@ class DiscoveryConfig(BaseSettings):
 
 
 def get_discovery_config() -> DiscoveryConfig:
-    print("[DEBUG] CONFIG_PATH:", CONFIG_PATH)
+    logger.debug("CONFIG_PATH", path=CONFIG_PATH)
     if not os.path.exists(CONFIG_PATH):
-        return DiscoveryConfig()
+        return DiscoveryConfig(
+            tile_server=DiscoveryConfig.model_fields["tile_server"].default
+        )
     with open(CONFIG_PATH, "r") as f:
         data = yaml.safe_load(f) or {}
-    print("[DEBUG] Raw YAML data:", data)
+    logger.debug("Raw YAML data", data=data)
     try:
         # Merge top-level keys (e.g., database_url) with discovery section
         merged = {
@@ -53,8 +58,10 @@ def get_discovery_config() -> DiscoveryConfig:
             merged["max_radius"] = DiscoveryConfig.model_fields["max_radius"].default
         if "concurrency" not in merged:
             merged["concurrency"] = DiscoveryConfig.model_fields["concurrency"].default
-        print("[DEBUG] Merged config for DiscoveryConfig:", merged)
+        logger.debug("Merged config for DiscoveryConfig", merged=merged)
         return DiscoveryConfig(**merged)  # type: ignore
     except ValidationError as e:
-        print("Config validation error:", e)
-        return DiscoveryConfig()
+        logger.error("Config validation error", error=str(e))
+        return DiscoveryConfig(
+            tile_server=DiscoveryConfig.model_fields["tile_server"].default
+        )

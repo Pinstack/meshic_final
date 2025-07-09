@@ -39,12 +39,10 @@
 - [x] Merge after review; rebase pipeline branch if needed
 - [x] Tag the commit for reference (e.g., v0.2-schema-i18n)
 
-## Phase 3: Implement Pipeline Stages
-- [ ] Implement Discovery Stage (src/scraper/pipelines/discovery.py, CLI command)  # Z15 tiles NOT suitable for testing discovery logic; use real/simulated tile server instead
-- [ ] Implement Ingestion Stage (src/scraper/pipelines/ingestion.py)  # Use Z15 tiles for local/manual ingestion testing
-- [ ] Implement Stitching Stage (src/scraper/pipelines/stitching.py)  # Use Z15 tiles for local/manual stitching testing
-- [ ] Implement H3 Indexing Stage (src/scraper/pipelines/h3_indexing.py)  # Use Z15 tiles for local/manual H3 indexing testing
-- [ ] Implement Enrichment Stage (src/scraper/pipelines/enrichment.py)  # Use Z15 tiles for local/manual enrichment testing
+## Phase 3: Ingestion (Modular)
+- [ ] Download and decode tiles, insert raw geometries (native CRS, e.g., EPSG:3857) into staging table (parcels_raw)
+- [ ] Reproject all geometries in staging table to EPSG:4326 using PostGIS (SQL), as a separate step/module
+- [ ] Document and test each stage for auditability and performance
 
 ## Phase 3.5: Geometry Processing & Reprojection
 - [ ] Perform all geometry operations (union, validation, deduplication) and reprojection in PostGIS using SQL (ST_Union, ST_Transform, etc.), not in Python
